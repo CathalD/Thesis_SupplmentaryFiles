@@ -1,0 +1,97 @@
+# This script will write Figure 11 for my thesis "cumulative carbon stock"
+# The output is a plot showing the cumulative carbon stock (kg m-2) as a function of age
+# For 3 cores collected in a cedar swamp from the Herrel Preserve, Southern Ontario
+
+
+# The input is the datafile Coredata2 from the Github repository
+setwd("~/Downloads/Thesis_SupplmentaryFiles-main")
+
+#Required packages
+library(ggplot2)
+library(tidyr)
+library(tidyverse)
+library(dplyr)
+library(readr)
+
+#The dataset should be organized as follows (Same as stratigraphy data)
+
+#Column 1-4: Sample site, Bottom depth of sample, middle depth of sample and Age Cal yr BP
+#Columns 5-34 are composed of parameters and there values
+
+#Its important the dataset that is organized such that parameter is a column, and beside each columns parameter
+# has an assigned value for it. So for each sample, every parameter and value should be labelled in each row
+
+
+#Step 1: import data
+
+#Set working directory to where the Github download is saved, for me its in downloads
+setwd("~/Downloads/Thesis_SupplmentaryFiles-main")
+
+#Obtain DBcoredata2 dataset from the supplementary datafiles
+dbdataset2 <- read_csv("Thesis_GitHub/DBcoredata2.csv")
+view(dbdataset2)
+
+# Subset data for each plot
+
+for (i in 1:1) {
+  ccstibble <- tibble(dbdataset2[1:82,1:4], dbdataset2[1:82,(i+16):(i+17)])#obtain the cumulative stock and ages data from dataset
+}
+
+
+
+#This Code is meant to rename the columns and to reverse the values of the y-axis
+#This could probably be done in ggplot with "Scale-reverse" but anyway, here it is done by
+#separating dataset into sites, then manually reversing the y with function "rev"
+
+sitedata <- c("DB-01", "DB-02", "DB-03") # assign a vector for the sites
+
+#Core DB01
+ccsdata1 <- ccstibble%>%
+  filter(site == sitedata[1])%>%
+  select(site, `Age for Midpoint of section estimated from rBacon model (yrbp)`, value...18)%>%
+  rename(ages = `Age for Midpoint of section estimated from rBacon model (yrbp)`, value = value...18)
+cudata11 <- tibble(ccsdata1$site, ccsdata1$ages, rev(ccsdata1$value))%>%
+  rename("site" = "ccsdata1$site", "ages" = "ccsdata1$ages", "value" = "rev(ccsdata1$value)")
+
+#Core DB02
+ccsdata2 <- ccstibble%>%
+  filter(site == sitedata[2])%>%
+  select(site, `Age for Midpoint of section estimated from rBacon model (yrbp)`, value...18)%>%
+  rename(ages = `Age for Midpoint of section estimated from rBacon model (yrbp)`, value = value...18)
+ccsdata22 <- tibble(ccsdata2$site, ccsdata2$ages, rev(ccsdata2$value))%>%
+  rename("site" = "ccsdata2$site", "ages" = "ccsdata2$ages", "value" = "rev(ccsdata2$value)")
+
+#Core DB03
+ccsdata3 <- ccstibble%>%
+  filter(site == sitedata[3])%>%
+  select(site, `Age for Midpoint of section estimated from rBacon model (yrbp)`, value...18)%>%
+  rename(ages = `Age for Midpoint of section estimated from rBacon model (yrbp)`, value = value...18)
+ccsdata33 <- tibble(ccsdata3$site, ccsdata3$ages, rev(ccsdata3$value))%>%
+  rename("site" = "ccsdata3$site", "ages" = "ccsdata3$ages", "value" = "rev(ccsdata3$value)")
+
+# Bind the dataframes above into 1
+ccstibblerev <-  rbind(cudata11, ccsdata22, ccsdata33)     
+
+# Using the new dataset with reversed y axis
+ThesisFigure11 <- ccstibblerev%>% # call in dataset
+  ggplot(aes(x = ages, y = value))+ # Assigns x axis as age, y axis as revered cumualtive carbon 
+  geom_line(aes(colour = site), size = 2, linetype = 1)+ # plot each line sepereating cores by colour
+  annotate("rect", xmin = 11650, xmax = 11750, ymin = -5, ymax = 10,
+           alpha = .5, colour = "green", fill = "green")+ #Add rectangle for start of peat initiaiton for each site
+  annotate("rect", xmin = 11075, xmax = 11175, ymin = -5, ymax = 10,
+           alpha = .5, colour = "red", fill = "red")+
+  annotate("rect", xmin = 8451, xmax = 8551, ymin = -5, ymax = 10,
+           alpha = .5, colour = "blue", fill = "blue")+
+  geom_point(aes(x = 6750, y = 28.37), shape = 8, colour = "red", fill = "red", size = 3)+ # Add star shape to point where 50% of the cumulative carbon mass is found
+  geom_point(aes(x = 8400, y = 38.81), shape = 8, colour = "green", fill = "green", size = 3)+
+  geom_point(aes(x = 3400, y = 22.2245), shape = 8, colour = "blue", fill = "blue", size = 3)+
+  scale_x_reverse(breaks = c(0,1500,3000,4500,6000,7500, 9000, 10500, 12000))+ # Set x-axis values to be plotted
+  scale_y_continuous(position = "right", breaks = c(0,10,20,30,40,50,60,70,80,90,100), expand = c(0.0001,2))+ # set y-axis on the right side, with set values
+  labs(x = "Age (Cal yr BP)", y = "Cumulative Areal Carbon Stock (KgCm-2)")+ # label
+  theme_bw()+
+  theme(legend.position = "bottom") # add a legend
+
+ThesisFigure11
+
+#Save to working directory as "PNG"
+ggsave("Thesis_Figure11CumulativeCarbonStock.PNG")         
