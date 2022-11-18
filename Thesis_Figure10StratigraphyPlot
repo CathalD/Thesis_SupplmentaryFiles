@@ -1,0 +1,151 @@
+# This script will be used to develop figure 10, the stratigraphy plots for my thesis
+
+# The input is from the Thesis_Github files downloaded from https://github.com/CathalD/Thesis_SupplmentaryFiles.git
+# Download the zip file, unzip the data file and set the working directory to wherever the fiel is saved to
+
+#The output is 4 graphs that will be saved in the working directory, here i set it to "Thesis_SupplmentaryFiles-main" from the github download
+# 1-3 are plots for each core
+# 4 is all the plots together, as showwn in figure 10
+
+#For this code, it was saved in "downloads" straight from teh github repository, but this can be adjusted
+
+setwd("~/Downloads/Thesis_SupplmentaryFiles-main")
+
+
+# This will output a "PNG" file for a figure with 9 plots,
+#3 plots for 3 cores showing the A) ash-free bulk density B) ACAR and C) C/N
+
+# The dataset needs a specific layout, with each value having an associated parameter value
+#Therefore, the dataset should be organized as follows
+#Column 1-4: Sample site, Bottom depth of sample, middle depth of sample and Age Cal yr BP
+#Columns 5-34 are composed of parameters and there values
+
+
+#Required packages
+library(tidyverse)
+library(cowplot)
+library(readr)
+
+# This datafile is provided in the Github repository
+
+dbdataset2 <- read_csv("Thesis_GitHub/DBcoredata2.csv")
+view(dbdataset2)
+
+#From this larger dataset, create a subset with the value you wish to analyse
+#Here, Ash free bulk density, ACAR and C/N ratio are chosen
+
+# This code calculates and compiles a data.frame for C/N values
+CNVal <- dbdataset2$value...10/dbdataset2$value...8
+CNparam <- rep('CN', 82)
+CN <- tibble(dbdataset2[1:82,1:4],CNparam, CNVal)%>%
+  rename(param = CNparam, value = CNVal)
+
+for (i in 1:1) {
+  cat1 <- tibble(dbdataset2[1:82,1:4], dbdataset2[1:82,(i +32):(i+33)])%>% # Obtain Ash-free bulk densities
+    rename(param = param...33, value = value...34)
+  cat2 <-  tibble(dbdataset2[1:82,1:4], dbdataset2[1:82,(i +28):(i+29)])%>% # Obtain ACAR values
+    rename(param =param...29, value = value...30)
+  carbontibble <- rbind(cat1,cat2, CN) # Create a data.frame with the 3 values obtained
+}
+
+
+#From new dataset called "carbontibble" subset again for each site
+strattibbledb01 <- carbontibble %>%
+  filter(site == "DB-01")
+strattibbledb02 <- carbontibble %>%
+  filter(site == "DB-02")
+strattibbledb03 <- carbontibble %>%
+  filter(site == "DB-03")
+
+
+
+# This code is setting up the data to be used for to construct the stratigraphy plots
+
+# To create a secondary axis, the function "Sec.axis", has to be a linear transformation of the primary axis
+
+age_depth_graph1 <- strattibbledb01 %>% # Obtain age depth data for core db01
+  select(`Mid Point Section (cm)`, `Age for Midpoint of section estimated from rBacon model (yrbp)`)
+age_depth_graph2 <- strattibbledb02 %>% #obtain age depth data for core db02
+  select(`Mid Point Section (cm)`, `Age for Midpoint of section estimated from rBacon model (yrbp)`)
+age_depth_graph3 <- strattibbledb03 %>% # Obtain age depth data for core db03
+  select(`Mid Point Section (cm)`, `Age for Midpoint of section estimated from rBacon model (yrbp)`)
+
+
+#Assign an object labeled "Facet_Order where you want to assign the order of variables for the plots
+facet_order <- c("OM density (gcm-3)", "Modelled Carbon Accumulation rate (gm-2yr-1)","CN"  )
+
+
+# The first plot will be the statigraphy for Core DB01
+stratplot1 <- strattibbledb01 %>% 
+  mutate(facet = factor(param, levels = facet_order))%>% # order parameters
+  mutate(facet_label = fct_recode(
+    facet,
+    "ACAR (gm-2yr-1)"= "Modelled Carbon Accumulation rate (gm-2yr-1)",
+    "Ash-free bulk density (gcm-3)" = "OM density (gcm-3)",
+    "C/N" = "CN")) %>% # Rename the parameters to make them friendlier
+  ggplot(aes(y = `Mid Point Section (cm)`, x = value)) +
+  geom_hline(yintercept = c(21.75, 76, 91), alpha = 0.7, lty = 2, color = "blue")+ # add a hline at the C14 radiocarbon dates
+  geom_path() +
+  geom_point()+
+  facet_wrap(~facet_label, scales = "free_x")+ #Facet wrap will replicate the graph for all 3 parameters of interest
+  scale_y_reverse(breaks = c(20,40,60,80,100), sec.axis = sec_axis( 
+    trans = ~approx(age_depth_graph1, xout = .)$y,
+    name = "Age (Cal yr BP)",
+    breaks = c(1000, 2000,  3000, 4000,  5000,  6000,  7000,  8000, 10000)), expand = c(0.01, 0.01))+ #Scale y reverse adds a secondary axis witht eh ages
+  labs(x = NULL, y = "Core depth (cm)", title = "Core DB01")+
+  theme_bw()
+
+stratplot1 # output the plot
+
+#Save the file in the working directory
+ggsave("StratigraphyGraphDB01.PNG")
+
+
+#Same but for Core DB02
+stratplot2 <- strattibbledb02 %>%
+  mutate(facet = factor(param, levels = facet_order))%>%
+  mutate(facet_label = fct_recode(
+    facet,
+    "ACAR (gm-2yr-1)"= "Modelled Carbon Accumulation rate (gm-2yr-1)",
+    "Ash-free bulk density (gcm-3)" = "OM density (gcm-3)",
+    "C/N" = "CN")) %>%
+  ggplot(aes(y = `Mid Point Section (cm)`, x = value)) +
+  geom_hline(yintercept = c(22, 80, 134), alpha = 0.7, lty = 2, color = "blue")+
+  geom_path() +
+  geom_point()+
+  facet_wrap(~facet_label, scales = "free_x")+
+  scale_y_reverse(breaks = c(20,40,60,80,100,120,140) , sec.axis = sec_axis(
+    trans = ~approx(age_depth_graph2, xout = .)$y,
+    name = "Age (Cal yr BP)",
+    breaks = c(1000, 2000, 4000, 6000, 8000, 9000, 10000, 11000, 12000)), expand = c(0.01, 0.01))+
+  labs(x = NULL, y = "Core depth (cm)", title = "Core DB02")+
+  theme_bw()
+stratplot2
+ggsave("StratigraphyGraphDB02.PNG")
+
+#Same but for Core DB03
+
+stratplot3 <- strattibbledb03 %>%
+  mutate(facet = factor(param, levels = facet_order))%>%
+  mutate(facet_label = fct_recode(
+    facet,
+    "ACAR (gm-2yr-1)"= "Modelled Carbon Accumulation rate (gm-2yr-1)",
+    "Ash-free bulk density (gcm-3)" = "OM density (gcm-3)",
+    "C/N" = "CN")) %>%
+  ggplot(aes(y = `Mid Point Section (cm)`, x = value)) +
+  geom_hline(yintercept = c(19, 37.5, 68.5,85), alpha = 0.7, lty = 2, color = "blue")+
+  geom_path() +
+  geom_point()+
+  facet_wrap(~facet_label, scales = "free_x")+
+  scale_y_reverse(breaks = c(20,40,60,80,100) , sec.axis = sec_axis(
+    trans = ~approx(age_depth_graph3, xout = .)$y,
+    name = "Age (Cal yr BP)",
+    breaks = c(1000, 2000, 3000, 4000,  5000,  6000,  7000, 8000, 9000)), expand = c(0.01, 0.01))+
+  labs(x = NULL, y = "Core depth (cm)", title = "Core DB03")+
+  theme_bw()
+stratplot3
+ggsave("StratigraphyGraphDB03.PNG")
+#Using cowplot package, function "plot_grid" with put three plots together with assigned rows and columns
+
+plot_grid(stratplot1, stratplot2, stratplot3, nrow = 3, ncol = 1)
+ggsave("Thesis_Figure10_StratigraphyPlot.PNG") # Save plot as "PNG" to diretory
