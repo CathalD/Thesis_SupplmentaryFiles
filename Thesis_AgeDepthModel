@@ -1,0 +1,280 @@
+#This script will produce age-depth graphs from the rbacon package
+
+
+# The input is from the Thesis_Github files downloaded from https://github.com/CathalD/Thesis_SupplmentaryFiles.git
+# Download the zip file, unzip the data file and set the working directory to wherever the file is saved to
+
+#For this code, it was saved in "downloads" straight from the github repository, but this can be adjusted
+
+
+setwd("~/Downloads/Thesis_SupplmentaryFiles-main/Thesis_GitHub/14Ccoredata")
+coredir = "Downloads/Thesis_SupplmentaryFiles-main/Thesis_GitHub/14Ccoredata" # set the core directory
+
+
+#The output is a file for each core, containing plots and other output features of the bacon model
+# As well, A datafile titled "agedepthdata.csv" will be created in the working directory
+
+#Blaauw, M., & Christen, J. A. (2011). Flexible paleoclimate age-depth models using an autoregressive gamma process. Https://Doi.Org/10.1214/11-BA618, 6(3), 457–474. https://doi.org/10.1214/11-BA618
+
+# First step:  install the bacon package and calibration curve.
+
+#install.packages("rbacon")
+#install.packages("IntCal")
+
+library(rbacon)
+
+#IntCal, a radiocarbon calibration curve (meaning the a dataset of actual measured
+#14C from tree rings for the past 13,910 years, then other proxies for dates beyond that)
+# It is a compilation of 220 tree rings C14 data, model or averaged using bayesian and spline model fits
+library(IntCal)
+
+
+#Set the directory to where the program saves "Bacon_runs" files
+
+
+# Step 1: Run the null model to open up the Bacon Directory, which will be created called "Bacon_runs"
+
+Bacon() # This produces a lot of files for an already built in core labeled MSB2K
+y # Yes run the model
+y # Yes run the model
+#Bacon(core ='RLGH3') #Same function, different core
+#y
+#y
+
+
+# RUNNING OTHER CORES
+#Save csv files in "Bacon_runs" folder under folders labeled with the same name as core
+# These files should have at least 5 columns, id, c14date, std, depth, cc = calibration curve
+#Each row should the macrofossil data obtained from radiocarbon dating,
+# with an additional row set to depth of "0" collected in Cal yr -71 BP (2021)
+
+#Set the directory to where the program saves "Bacon_runs" files
+#For my data, it was in desktop folder "mycores"
+
+
+
+# Step 2: Run the model using the cores stored in actual files...example
+Bacon(core = "CoreDB01")
+y # yes run the model
+y # yes run the model
+#Step 3: reassess priors to more accurately match the core
+
+
+# Core DB03
+#acc.mean = 96.6
+#d.min= 0, d.max = 87.5
+#  Min.Age = -71bp, Setting depth 0 to -71bp
+Bacon(core = "CoreDB03", thick = 4, prob = 0.95, d.min = 0, d.max = 87.5, acc.mean = 96.6, )
+n
+y
+
+
+
+#Check to see if parameters are sufficient using "Baconconvergence"
+#This function will run a series of models and compare the variance between them
+# A value of 1.0 is perfect, below 1.05 is accepted, models are "not different" from eachother
+
+
+Baconvergence(core = "CoreDB03", thick = 4, prob = 0.95, d.min = 0, d.max = 87.5, acc.mean = 96.6)
+
+#Did 5 Bacon runs.
+#Gelman and Rubin Reduction Factor 1.11944549779681 (smaller and closer to 1 is better).
+#Probably not a robust MCMC run! Too much difference between runs, above the 1.05 threshold. Increase sample size?
+
+# A note on the Gelman-Rubin reduction factor. 
+#The goal of the statistic (because it is a singular stat) is to compare the within-chain variance and the between-chain variance. 
+
+
+# Adjust model parameters to meet threshold. 
+
+#Thickness, Run model 3 with thickness = 2
+Bacon(core = "CoreDB03", thick = 2, prob = 0.95, d.min = 0, d.max = 87.5, acc.mean = 96.6, dark = 0.75)
+n
+y
+
+Baconvergence(core = "CoreDB03", thick = 2, prob = 0.95, d.min = 0, d.max = 87.5, acc.mean = 96.6)
+#Did 5 Bacon runs.
+#Gelman and Rubin Reduction Factor 1.04193263220298 (smaller and closer to 1 is better).
+#Robust MCMC mixing, below the 1.05 safety threshold.
+
+
+# Next steps are to run this for the other cores...
+
+# Core DB02
+#acc.mean = 84.3, mean accumulation rate
+#d.min = 0, d.max = 140 min and max depth for model
+# d.by = 33.5
+# depth 0 = 2021AD or - 71bp set depth 0 at age core was taken
+Bacon(core = "CoreDB02", thick = 2, prob = 0.95, d.min = 0, d.max = 140, acc.mean = 84.3)
+n
+y
+Baconvergence(core = "CoreDB02", thick = 2, prob = 0.95, d.min = 0, d.max = 140, acc.mean = 84.3)
+
+
+# Next steps with be to omit the samples that seem out of line for DBO1 and DB02..
+
+
+
+#Core DBO1
+#acc.mean = 124.86
+#d.min = 0, d.max = 92
+# d.by = 23, interval ages were taken at...
+Bacon(core = "CoreDB01", thick = 2, prob = 0.95, d.min = 0, d.max = 92, acc.mean = 125)
+n
+y
+Baconvergence(core = "CoreDB01", thick = 2, prob = 0.95, d.min = 0, d.max = 92, acc.mean = 125)
+#Did 5 Bacon runs.
+#Gelman and Rubin Reduction Factor 1.03547028169158 (smaller and closer to 1 is better).
+#Robust MCMC mixing, below the 1.05 safety threshold.
+
+
+
+#Bacon function automatically outputs plots....see directory
+
+#-----------------------------------------------------------------------------------------------
+
+# The second portion of this script is to output the accretion rates for each section of the core
+
+# First we need to obtain the midpoints of the for the section at a specified resolution...
+# Because all other analyses for this project were done at 4 cm resolution, we will stick with that
+
+#import data from the cores from the thesis_Github repository
+
+
+
+
+DBcoredata <- read_csv("~/Downloads/Thesis_SupplmentaryFiles-main/Thesis_GitHub/DBcoredata.csv")
+# obtain the midpoint for each depth
+CoreSections <- DBcoredata$`Mid Point Section (cm)`
+
+# Then call back the model for db03 for which the accretion rates will be calculated...
+Bacon(core = "CoreDB03", thick = 2, prob = 0.95, d.min = 0, d.max = 87.5, acc.mean = 96.6)
+n
+y
+agedepth()
+#The accretion rates can be visualized for this core using these functions
+par(mfrow=c(2,1))
+accrate.depth.ghost() # accretion rate with depth plot
+accrate.age.ghost() # accretion rate with age plot
+
+#Find the age values for the midpoint of each section
+db03 <- subset(DBcoredata, DBcoredata$site == "DB-03")
+db03SectMid <- db03$`Mid Point Section (cm)`
+db03_age <- 1:length(db03SectMid)
+for (i in 1:length(db03SectMid)) {
+  db03_age[[i]] = mean(Bacon.Age.d(db03SectMid[i]))
+}
+
+db03_age
+
+# For eac age, calculate accretion rates
+
+db03_Accretionagecmyr <- 1:length(db03_age)
+for (i in 1:length(db03_age)) {
+  db03_Accretionagecmyr2[i] = mean(accrate.age((db03_age[i]), cmyr = TRUE))
+}
+
+
+
+
+#Create a datafile with all the values...
+db03_outputmatrix <- data.frame(db03SectMid, db03_age, db03_Accretionagecmyr2)
+
+
+# Next steps are to run this for the other cores...
+
+# Core DB02
+
+Bacon(core = "CoreDB02", thick = 2, prob = 0.95, d.min = 0, d.max = 140, acc.mean = 84.3)
+n
+y
+agedepth()
+
+#The accretion rates can be visualized for this core using these functions
+par(mfrow=c(2,1))
+accrate.depth.ghost() # accretion rate with depth plot
+accrate.age.ghost() # accretion rate with age plot
+
+
+db02 <- subset(DBcoredata, DBcoredata$site == "DB-02")
+db02SectMid <- db02$`Mid Point Section (cm)`
+
+
+#Calculate age at each midpooint
+db02_age <- 1:length(db02SectMid)
+for (i in 1:length(db02SectMid)) {
+  db02_age[[i]] = mean(Bacon.Age.d(db02SectMid[i]))
+}
+
+db02_age
+
+# Using ages obtained, calculated accretion rate
+db02_Accretionagecmyr <- 1:length(db02_age);
+for (i in 1:length(db02_age)) {
+  db02_Accretionagecmyr [[i]] = mean(accrate.age(db02_age[i], cmyr = TRUE))
+}
+
+
+
+#Output matrix/dataframe
+
+db02_outputmatrix <- data.frame(db02SectMid, db02_age, db02_Accretionagecmyr)
+
+
+
+
+# Extracting the age depth data
+
+Bacon(core = "CoreDB01", thick = 2, prob = 0.95, d.min = 0, d.max = 92, acc.mean = 125)
+n
+y
+agedepth()
+
+#Find midpoint
+
+db01 <- subset(DBcoredata, DBcoredata$site == "DB-01")
+db01SectMid <- db01$`Mid Point Section (cm)`
+
+# then for each depth, we need accretion rates
+#Bacon gives these in yr/cm, so they need to also be converted to cm/yr = 1/yr/cm
+
+
+db01_age <- 1:length(db01SectMid)
+for (i in 1:length(db01SectMid)) {
+  db01_age[[i]] = mean(Bacon.Age.d(db01SectMid[i]))
+}
+
+db01_age
+
+db01_Accretionagecmyr <- 1:length(db01_age)
+for (i in 1:length(db01_age)) {
+  db01_Accretionagecmyr [[i]] = mean(accrate.age(db01_age[i], cmyr = TRUE))
+}
+
+
+db01_outputmatrix <- data.frame(db01SectMid, db01_age,  db01_Accretionagecmyr)
+
+
+#Plotting the agedepth data
+#Call in model.....
+par(mfrow=c(2,1))
+accrate.depth.ghost()
+accrate.age.ghost()
+
+
+# Exporting data....
+
+# Core, depth, age, accretion rate
+
+corenames <- DBcoredata$site
+coredepths <- CoreSections 
+CalAges <- c(db01_outputmatrix$db01_age[1:24], db02_outputmatrix$db02_age[1:35], db03_outputmatrix$db03_age[1:23])
+Accretionrates <- c(db01_outputmatrix$db01_Accretionagecmyr[1:24], db02_outputmatrix$db02_Accretionagecmyr[1:35], db03_outputmatrix$db03_Accretionagecmyr2[1:23])
+
+#Export file "agedepthdata.csv" to working directory "14coredata"
+
+AgedepthDatafile <- data.frame(corenames, coredepths, CalAges, Accretionrates)
+print(AgedepthDatafile)
+write.csv(AgedepthDatafile, "agedepthdata.csv")
+
+agedepth()
