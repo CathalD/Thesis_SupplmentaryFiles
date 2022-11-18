@@ -3,7 +3,7 @@
 # Please download the Zip file under the green "Code" button -> Download ZIP
 
 This repository contains the code and datasets I used to analyse and visualize the data from my thesis
-This repository includes three datasets located in file "ThesisDatasets"
+This repository includes three datasets located in file "Thesis_Github"
 
 1. supplementary code, open sourced in the data reposiroty figshare "https://figshare.com/s/61087da39b9eb704ac7f"
 2. Coredata, which inlciudes the data for my cores in csv format
