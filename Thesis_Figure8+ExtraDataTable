@@ -1,0 +1,132 @@
+# This script is for figure 8, % carbon to %OM ratio, comparing 3 cores
+# Collected form the Herrell Preserve, Southern Ontario, Canada
+#Additional statistical comparison and output data will be generated for
+#Linear regressions for all samples and for each core
+
+
+# The input data is DBcoredata.csv available from teh github repository
+# The output files are:
+#1. Figure 8 - %carbon to %OM for all samples and each core
+#2. 
+
+#Required packages
+library(ggplot2)
+library(tidyverse)
+library(readr)
+
+
+#The dataset is the same as "Thesis_SupplementaryData"
+#Can be any data that has %carbon and LOI550/Organic matter content for each core
+
+setwd("~/Downloads/Thesis_SupplmentaryFiles-main")
+
+#Step 1: import dataset
+DBcoredata <- read_csv("Thesis_GitHub/DBcoredata.csv")
+View(DBcoredata)
+
+# Subset the data for values with an Organic matter content over 30%
+ocdata <- subset(DBcoredata, DBcoredata$LOI550 > 30)
+
+
+#Plot the %carbon and LOI550 vlaues
+
+ocplot1<- ocdata%>% #call in dataset
+  ggplot(aes(y = `%Carbon`, x = LOI550))+ #assign y variable %carbon, x OM
+  geom_point(aes(colour = site))+ # aesthetically (function aes) group by site and show as colour
+  geom_smooth(method = "lm")+ #add in line of best fit
+  labs(x = "Organic Matter Content (%)", y = "Carbon content (%)")+ #lab x and y axis
+  theme_minimal()+
+  theme(axis.title = element_text(size = 20),
+        axis.text = element_text(size = 20),
+        legend.text = element_text(size = 20),
+        legend.title = element_text(size = 25))
+
+ocplot1 # print the plot
+
+ggsave("Thesis_Figure8C:OMplot.PNG") # save it working directory as "PNG"
+
+
+# Run a linear model on the %carbon and OM to find slope of the line
+dblm <- lm(data = ocdata, `%Carbon` ~ LOI550)
+summary(dblm) #print results from linear model
+
+#run linear models for each core independently:
+
+# First subset dataset for each core
+sub01 <- subset(ocdata, ocdata$site == "DB-01")
+sub02 <- subset(ocdata, ocdata$site == "DB-02")
+sub03 <- subset(ocdata, ocdata$site == "DB-03")
+
+#Then run linear models on % carbon and % OM for each subset core
+
+sub1lm <- lm(data = sub01, `%Carbon` ~ LOI550)
+sub2lm <- lm(data = sub02, `%Carbon` ~ LOI550)
+sub3lm <- lm(data = sub03, `%Carbon` ~ LOI550)
+
+# Print the results from each linear model to find coefficients
+summary(sub1lm)
+summary(sub2lm)
+summary(sub3lm)
+
+
+# --------------------------------------------------------------------------------
+
+
+# Find some values about the cores since we have some data ready
+
+#Finding average values and standard deviation
+
+# Average OM% for each core
+
+
+sub01 <- subset(ocdata, ocdata$site == "DB-01")
+sub02 <- subset(ocdata, ocdata$site == "DB-02")
+sub03 <- subset(ocdata, ocdata$site == "DB-03")
+
+DB.01 <- mean(sub01$LOI550)
+sdOM1 <- sd(sub01$LOI550)
+
+DB.02 <- mean(sub02$LOI550)
+sdOM2 <- sd(sub02$LOI550)
+
+DB.03 <- mean(sub03$LOI550)
+sdOM3 <- sd(sub03$LOI550)
+
+# Output table
+
+MeanOrganicMatter <- rbind(DB.01, DB.02, DB.03)
+SDOrganicMatter <- rbind(sdOM1, sdOM2, sdOM3)
+
+OMtable <- tibble(MeanOrganicMatter, SDOrganicMatter)
+
+DB.01C <- mean(sub01$`%Carbon`)
+sdOM1C <- sd(sub01$`%Carbon`)
+
+DB.02C <- mean(sub02$`%Carbon`)
+sdOM2C <- sd(sub02$`%Carbon`)
+
+DB.03C <- mean(sub03$`%Carbon`)
+sdOM3C <- sd(sub03$`%Carbon`)
+
+COM1 = DB.01C/DB.01
+COM2 = DB.02C/DB.02
+COM3 = DB.03C/DB.03
+
+
+#LOI950
+DB.01 <- mean(sub01$LOI950*100)
+sdOM1 <- sd(sub01$LOI950*100)
+
+DB.02 <- mean(sub02$LOI950*100)
+sdOM2 <- sd(sub02$LOI950*100)
+
+DB.03 <- mean(sub03$LOI950*100)
+sdOM3 <- sd(sub03$LOI950*100)
+
+MeanLOI950 <- rbind(DB.01, DB.02, DB.03)
+SDLOI950 <- rbind(sdOM1, sdOM2, sdOM3)
+
+LOI550.950Table <- data.frame(OMtable, MeanLOI950, SDLOI950)
+print(LOI550.950Table)
+setwd("~/Downloads/Thesis_SupplmentaryFiles-main")
+write.csv(LOI550.950Table, "LOI550.950Table")
