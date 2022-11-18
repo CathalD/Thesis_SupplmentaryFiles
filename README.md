@@ -1,5 +1,7 @@
 # Thesis_SupplmentaryFiles
 
+# Please download the Zip file under the green "Code" button -> Download ZIP
+
 This repository contains the code and datasets I used to analyse and visualize the data from my thesis
 This repository includes three datasets located in file "ThesisDatasets"
 
