@@ -6,8 +6,8 @@ This repository contains the code and datasets I used to analyse and visualize t
 
 This repository includes three datasets located in file "Thesis_Github"
 
-1. supplementary code, also open sourced in the data reposiroty figshare "https://figshare.com/s/61087da39b9eb704ac7f"
-2. Coredata, which inlciudes the data for my cores in .csv format
+1. supplementary code, also open sourced in the data repository figshare "https://figshare.com/s/61087da39b9eb704ac7f"
+2. Coredata, which includes the data for my cores in .csv format
 3. Coredata2, which contains the same inforamtion as Coredata, but set up as "parameter" and an associated "values" for each parameter
 4. The raw C14 dates organised to be used by the rbacon package found in "Bacon_runs" file
 
