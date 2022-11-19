@@ -7,7 +7,7 @@
 # The input data is DBcoredata.csv available from teh github repository
 # The output files are:
 #1. Figure 8 - %carbon to %OM for all samples and each core
-#2. 
+#2. Datatable for cores, mean OM, sd, LOI950, %C:OM
 
 #Required packages
 library(ggplot2)
@@ -18,6 +18,8 @@ library(readr)
 #The dataset is the same as "Thesis_SupplementaryData"
 #Can be any data that has %carbon and LOI550/Organic matter content for each core
 
+# Set the working directory to where the GitHub files are stored,
+#Here it is set to downloads folder
 setwd("~/Downloads/Thesis_SupplmentaryFiles-main")
 
 #Step 1: import dataset
@@ -32,10 +34,10 @@ ocdata <- subset(DBcoredata, DBcoredata$LOI550 > 30)
 
 ocplot1<- ocdata%>% #call in dataset
   ggplot(aes(y = `%Carbon`, x = LOI550))+ #assign y variable %carbon, x OM
-  geom_point(aes(colour = site))+ # aesthetically (function aes) group by site and show as colour
+  geom_point(aes(colour = site))+ #  (function aes) group by site and show as colour
   geom_smooth(method = "lm")+ #add in line of best fit
-  labs(x = "Organic Matter Content (%)", y = "Carbon content (%)")+ #lab x and y axis
-  theme_minimal()+
+  labs(x = "Organic Matter Content (%)", y = "Carbon content (%)")+ #label x and y axis
+  theme_minimal()+ #Adjust axis text
   theme(axis.title = element_text(size = 20),
         axis.text = element_text(size = 20),
         legend.text = element_text(size = 20),
@@ -50,39 +52,22 @@ ggsave("Thesis_Figure8C:OMplot.PNG") # save it working directory as "PNG"
 dblm <- lm(data = ocdata, `%Carbon` ~ LOI550)
 summary(dblm) #print results from linear model
 
-#run linear models for each core independently:
-
-# First subset dataset for each core
-sub01 <- subset(ocdata, ocdata$site == "DB-01")
-sub02 <- subset(ocdata, ocdata$site == "DB-02")
-sub03 <- subset(ocdata, ocdata$site == "DB-03")
-
-#Then run linear models on % carbon and % OM for each subset core
-
-sub1lm <- lm(data = sub01, `%Carbon` ~ LOI550)
-sub2lm <- lm(data = sub02, `%Carbon` ~ LOI550)
-sub3lm <- lm(data = sub03, `%Carbon` ~ LOI550)
-
-# Print the results from each linear model to find coefficients
-summary(sub1lm)
-summary(sub2lm)
-summary(sub3lm)
-
 
 # --------------------------------------------------------------------------------
 
 
-# Find some values about the cores since we have some data ready
+# This second section will create a table for each of the cores
+#1. OM, mean & sd
+#2. LOI950, mean &sd
+#3. %C:OM ratio
 
-#Finding average values and standard deviation
 
-# Average OM% for each core
-
-
+#First subset the data into each core
 sub01 <- subset(ocdata, ocdata$site == "DB-01")
 sub02 <- subset(ocdata, ocdata$site == "DB-02")
 sub03 <- subset(ocdata, ocdata$site == "DB-03")
 
+# Find mean OM and SD for each core
 DB.01 <- mean(sub01$LOI550)
 sdOM1 <- sd(sub01$LOI550)
 
@@ -92,13 +77,14 @@ sdOM2 <- sd(sub02$LOI550)
 DB.03 <- mean(sub03$LOI550)
 sdOM3 <- sd(sub03$LOI550)
 
-# Output table
+# Compikle into a dataframe
 
 MeanOrganicMatter <- rbind(DB.01, DB.02, DB.03)
 SDOrganicMatter <- rbind(sdOM1, sdOM2, sdOM3)
 
 OMtable <- tibble(MeanOrganicMatter, SDOrganicMatter)
 
+# Find the %carbon for each core, mean & sd
 DB.01C <- mean(sub01$`%Carbon`)
 sdOM1C <- sd(sub01$`%Carbon`)
 
@@ -108,12 +94,14 @@ sdOM2C <- sd(sub02$`%Carbon`)
 DB.03C <- mean(sub03$`%Carbon`)
 sdOM3C <- sd(sub03$`%Carbon`)
 
-COM1 = DB.01C/DB.01
-COM2 = DB.02C/DB.02
-COM3 = DB.03C/DB.03
+DB.01 = DB.01C/DB.01
+DB.02 = DB.02C/DB.02
+DB.03 = DB.03C/DB.03
 
+#Compile into a data.framw
+CarbonOMratio <- rbind(DB.01, DB.02, DB.03)
 
-#LOI950
+# Find mean and SD for LOI950 for each core
 DB.01 <- mean(sub01$LOI950*100)
 sdOM1 <- sd(sub01$LOI950*100)
 
@@ -126,7 +114,30 @@ sdOM3 <- sd(sub03$LOI950*100)
 MeanLOI950 <- rbind(DB.01, DB.02, DB.03)
 SDLOI950 <- rbind(sdOM1, sdOM2, sdOM3)
 
-LOI550.950Table <- data.frame(OMtable, MeanLOI950, SDLOI950)
-print(LOI550.950Table)
+
+DB.01N <- sub01$`%Nitrogen`
+DB.02N <- sub02$`%Nitrogen`
+DB.03N <- sub03$`%Nitrogen`
+
+
+DB.01 = mean(DB.01C/DB.01N)
+sdcn1 = sd(DB.01C/DB.01N)
+DB.02 = mean(DB.02C/DB.02N)
+sdcn2 = sd(DB.02C/DB.02N)
+DB.03 = mean(DB.03C/DB.03N)
+sdcn3 = sd(DB.03C/DB.03N)
+
+#Compline C/N into a dataframe
+
+meanCNratio <- rbind(DB.01, DB.02, DB.03)
+sdCNratio <- rbind(sdcn1, sdcn2, sdcn3)
+
+
+#Compile all data into a data.frame
+CoredataTable <- data.frame(OMtable, MeanLOI950, SDLOI950, meanCNratio, sdCNratio,CarbonOMratio)
+
+print(CoredataTable) #Print the table
+
+#Export Table as .CSV to Thesis_SupplementaryFiles-main" directory from github
 setwd("~/Downloads/Thesis_SupplmentaryFiles-main")
-write.csv(LOI550.950Table, "LOI550.950Table")
+write.csv(CoredataTable, "CoredataTable.csv")
