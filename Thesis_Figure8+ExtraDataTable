@@ -132,12 +132,102 @@ sdcn3 = sd(DB.03C/DB.03N)
 meanCNratio <- rbind(DB.01, DB.02, DB.03)
 sdCNratio <- rbind(sdcn1, sdcn2, sdcn3)
 
+#Find the mean and sd for ash free bulk density
+
+DB.01 <- mean(sub01$`OM density (gcm-3)`)
+sdAFBD1  <- sd(sub01$`OM density (gcm-3)`)
+
+DB.02 <- mean(sub02$`OM density (gcm-3)`)
+sdAFBD2  <- sd(sub02$`OM density (gcm-3)`)
+
+DB.03 <- mean(sub03$`OM density (gcm-3)`)
+sdAFBD3 <- sd(sub03$`OM density (gcm-3)`)
+
+#Compile into a data.frame
+meanAshfreebulkDensity <- rbind(DB.01, DB.02, DB.03)
+SDAshfreebulkDensity  <- rbind(sdAFBD1, sdAFBD2, sdAFBD3)
+
 
 #Compile all data into a data.frame
-CoredataTable <- data.frame(OMtable, MeanLOI950, SDLOI950, meanCNratio, sdCNratio,CarbonOMratio)
+ThesisTable5 <- data.frame(OMtable, MeanLOI950, SDLOI950, meanAshfreebulkDensity, SDAshfreebulkDensity, meanCNratio, sdCNratio,CarbonOMratio)
 
-print(CoredataTable) #Print the table
+print(ThesisTable5) #Print the table
 
 #Export Table as .CSV to Thesis_SupplementaryFiles-main" directory from github
 setwd("~/Downloads/Thesis_SupplmentaryFiles-main")
-write.csv(CoredataTable, "CoredataTable.csv")
+write.csv(ThesisTable5, "ThesisTable5.csv")
+
+
+
+#--------------------------------------------------------------------------------------------
+
+#This is third section summarizes ANOVA and post-hoc Tukey tests for differences among the cores
+#Variables to compare
+#1. LOI950
+#2. C/N ratio
+
+#Test for statistical assumptions among the data
+#Visualize the data
+library(ggpubr)
+library(car)
+
+#--------------------------------------------------
+#Comparing LOI950 data among cores
+
+#Testing assumptions for the data
+
+ggqqplot(ocdata$LOI950)
+ocdata%>%
+  ggplot(aes(x = LOI950, colour = site))+
+  geom_histogram()
+
+#Testing normality of LOI950 data with shapiro-wilks test
+
+shapiro.test(ocdata$LOI950)
+shapiro.test(sub01$LOI950)
+shapiro.test(sub02$LOI950)
+shapiro.test(sub03$LOI950)
+
+#All cores together pass the test for normality
+#Cores DB02 and DB03 pass the test of normality individually
+# Core DB01 does not
+
+# Testing homogeniety of variances
+ 
+leveneTest(data = ocdata, LOI950 ~ site)
+
+# Variance among the groups not significantly different, therefore we can continue assuming equal variance
+
+ANOVALOI950 <- aov(data = ocdata, LOI950 ~ site)
+summary.aov(ANOVALOI950)
+TukeyHSD(ANOVALOI950)
+
+#----------------------------------------------------
+#Comparing C/N between the cores
+#Testing assumptions for the data
+
+CN2 <- ocdata$`%Carbon`/ocdata$`%Nitrogen`
+ocdata2 <- data.frame(ocdata, CN2)
+
+ggqqplot(ocdata2$CN2)
+ocdata%>%
+  ggplot(aes(x = CN2, colour = site))+
+  geom_histogram()
+
+#Testing normality of LOI950 data with shapiro-wilks test
+
+shapiro.test(ocdata2$CN2)
+
+#All cores together pass the test for normality
+#Cores DB02 and DB03 pass the test of normality individually
+# Core DB01 does not
+
+# Testing homogeneity of variances
+
+leveneTest(data = ocdata2, CN2 ~ site)
+
+# Variance among the groups not significantly different, therefore we can continue assuming equal variance
+
+ANOVACN <- aov(data = ocdata2, CN2 ~ site)
+summary.aov(ANOVACN)
+TukeyHSD(ANOVACN)
