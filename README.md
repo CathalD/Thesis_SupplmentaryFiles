@@ -1,6 +1,7 @@
 # Thesis_SupplmentaryFiles
 
 # Please download the Zip file under the green "Code" button -> Download ZIP
+#This code is designed to run in R and Rstudio
 
 This repository contains the code and datasets I used to analyse and visualize the data for my thesisv titled "Long-term carbon and accumulation in a cedar (Thuja occidentalis) swamp in the Lake Simcoe Watershed, Southern Ontario, Canada"
 
