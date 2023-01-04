@@ -12,7 +12,9 @@ This repository includes four datasets located in file "Thesis_Github"
 3. Coredata2, which contains the same inforamtion as Coredata, but set up as "parameter" and an associated "values" for each parameter
 4. The raw C14 dates organised to be used by the rbacon package found in "Bacon_runs" file
 
-# Thesis_AgeDepthModel
+#Whats each script does
+
+#Thesis_AgeDepthModel
 contains the code used to analyse the raw 14C data to create an age depth model
 
 #Thesis_Figure10;11 
